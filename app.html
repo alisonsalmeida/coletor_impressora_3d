@@ -1,0 +1,66 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Monitor Impressora 3D</title>
+    <script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script type="module" charset="utf-8">
+        import { init_chart } from "./static/chart.js";
+
+        $(document).ready(function() {
+            const data_x = []
+            const data_y = []
+            const data_z = []
+            const timestamp = []
+
+            const [myChart, option] = init_chart();
+
+            var socket = io.connect('ws://0.0.0.0:5500/collect', {'transports': ['websocket']});
+            socket.on('connect', function() {
+            });
+
+            socket.on('disconnect', function() {
+            });
+
+            socket.on('DATA_AVAILABLE', function(msg) {
+                data_x.push(...msg.data.acelerometro1.x)
+                data_y.push(...msg.data.acelerometro2.y)
+                data_z.push(...msg.data.acelerometro3.z)
+
+                for (let i = 0; i < msg.data.acelerometro1.x.length; i++){
+                    if (i === 0){
+                        timestamp.push(new Date().toLocaleTimeString().replace(/^\D*/, ''))
+                    }
+                    else {
+                        timestamp.push('')
+                    }
+                }
+
+                myChart.setOption({
+                    xAxis: [
+                      {
+                        data: timestamp
+                      }
+                    ],
+                    series: [
+                      {
+                        data: data_x
+                      },
+                      {
+                        data: data_y
+                      },
+                      {
+                        data: data_z
+                      }
+                    ]
+                });
+            });
+
+        });
+    </script>
+</head>
+<body>
+    <canvas id="main" height="800" width="1000"></canvas>
+</body>
+</html>
